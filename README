@@ -1,0 +1,31 @@
+``gym-wrappers``, a collection of wrappers for OpenAI Gym environments
+======================================================================
+
+Current release at ``v0.1.0``.
+
+Installation
+------------
+
+To install:
+
+.. code-block:: bash
+
+   pip install gym-wrappers
+
+or
+
+.. code-block:: bash
+
+   pip install git+https://github.com/geyang/gym-wrappers
+
+Usage Example
+-------------
+
+.. code-block:: python
+
+   import gym
+   from gym_wrappers import VecEnv
+
+   # your code-block here...
+
+Ge Yang © 2020
