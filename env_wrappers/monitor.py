@@ -4,17 +4,26 @@ from gym.core import Wrapper
 
 class Monitor(Wrapper):
 
-    def __init__(self, env, prefix, allow_early_resets=False):
+    def __init__(self, env, prefix=None, allow_early_resets=False):
+        """ Monitor Wrapper
+
+        This wrapper uses ml-logger to cache environment metrics.
+
+        :param env: gym environment
+        :param prefix: cache prefix, used to direct the stored metrics
+            to a specific cache namescope.
+        :param allow_early_resets: default False. raise exception
+            if manual reset is detected.
+        """
         Wrapper.__init__(self, env=env)
         from ml_logger import logger
 
-        self.prefix = prefix
+        self.prefix = prefix  # used as cache key for the summary cache
         self.logger = logger
         self.allow_early_resets = allow_early_resets
-        self.t0 = time.time()
+        self.now = self.t0 = time.time()
         self.rewards = []
-        # self.episode_rewards = []
-        # self.episode_lengths = []
+
         self.total_steps = 0
         self.additional_key_values = {}  # extra info that gets injected into each log entry
         # Useful for metalearning where we're modifying the environment externally
@@ -28,9 +37,9 @@ class Monitor(Wrapper):
 
     def reset(self):
         if not self.allow_early_resets and self.rewards:
-            raise RuntimeError(
-                "Tried to reset an environment before done. If you want to allow early "
-                "resets, wrap your env with Monitor(env, path, allow_early_resets=True)")
+            raise RuntimeError("Tried to reset an environment before done. If "
+                               "you want to allow early resets, wrap your env "
+                               "with Monitor(env, path, allow_early_resets=True)")
         return self.env.reset()
 
     def step(self, action):
@@ -38,18 +47,17 @@ class Monitor(Wrapper):
         self.rewards.append(rew)
         if done:
             self.rewards = []
-            eprew = sum(self.rewards)
-            eplen = len(self.rewards)
-            epinfo = {"r": eprew, "l": eplen, "t": round(time.time() - self.t0, 6)}
-            epinfo.update(self.additional_key_values)
-            epinfo["total_steps"] = self.total_steps
+            ep_rew = sum(self.rewards)
+            ep_len = len(self.rewards)
+            now = time.time()
+            dt, self.now = now - self.now, now
+            ep_info = {"r": ep_rew, "l": ep_len, "t": round(self.now - self.t0, 6)}
+            ep_info.update(self.additional_key_values)
+            ep_info["total_steps"] = self.total_steps
 
-            with self.logger.PrefixContext(self.prefix):
-                self.logger.log_metrics(epinfo, flush=True, silent=True)
+            self.logger.store(ep_rew=ep_rew, ep_len=ep_len, dt=round(dt, 6), cache=self.prefix)
 
-            # self.episode_rewards.append(eprew)
-            # self.episode_lengths.append(eplen)
-            info['episode'] = epinfo
+            info['episode'] = ep_info
 
         self.total_steps += 1
         return ob, rew, done, info
