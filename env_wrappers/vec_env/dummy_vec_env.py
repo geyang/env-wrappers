@@ -1,6 +1,6 @@
 import numpy as np
-from baselines.common.vec_env import VecEnv
-from baselines.common.vec_env.util import copy_obs_dict, dict_to_obs, obs_space_info
+from .vec_env import VecEnv
+from .util import copy_obs_dict, dict_to_obs, obs_space_info
 
 
 class DummyVecEnv(VecEnv):
