@@ -46,8 +46,9 @@ class VecEnv(ABC):
         self.observation_space = observation_space
         self.action_space = action_space
 
-    def __repr__(self):
-        return f"<{self.__class__.__name__}{self.envs[0]}>"
+    # def __repr__(self):
+    #     # self.envs does not exist
+    #     return f"<{self.__class__.__name__}{self.envs[0]}>"
 
     @abstractmethod
     def reset(self):

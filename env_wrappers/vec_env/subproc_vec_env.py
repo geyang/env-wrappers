@@ -41,7 +41,7 @@ class SubprocVecEnv(VecEnv):
     Recommended to use when num_envs > 1 and step() can be a bottleneck.
     """
 
-    def __init__(self, env_fns, spaces=None, context='spawn', in_series=1):
+    def __init__(self, env_fns, context='fork', in_series=1):
         """
         Arguments:
 
@@ -101,7 +101,10 @@ class SubprocVecEnv(VecEnv):
             for remote in self.remotes:
                 remote.recv()
         for remote in self.remotes:
-            remote.send(('close', None))
+            try:
+                remote.send(('close', None))
+            except BrokenPipeError:
+                pass  # avoid error at the after exit().
         for p in self.ps:
             p.join()
 
@@ -117,8 +120,7 @@ class SubprocVecEnv(VecEnv):
         assert not self.closed, "Trying to operate on a SubprocVecEnv after calling close()"
 
     def __del__(self):
-        if not self.closed:
-            self.close()
+        self.close()
 
 
 def _flatten_obs(obs):
