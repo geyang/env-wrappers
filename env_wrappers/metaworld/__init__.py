@@ -13,6 +13,15 @@ if __name__ != '__main__':
                              ),
                  )
         ALL_ENVS.append(ID)
+
+        ID = f'{task_name[:-3].capitalize()}-fixed{task_name[-3:]}'
+        register(id=ID,
+                 entry_point='env_wrappers.metaworld.mw_env:MWFixedEnv',
+                 kwargs=dict(task_name=task_name,
+                             # width=84, height=84, frame_skip=4
+                             ),
+                 )
+        ALL_ENVS.append(ID)
 else:
     from cmx import doc
 
