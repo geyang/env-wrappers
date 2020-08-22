@@ -47,6 +47,7 @@ else:
             frames = []
             for i in range(10):
                 env.reset()
+                env.step(env.action_space.sample())
                 frames.append(env.render("rgb", width=240, height=240))
             row.video(frames, f"videos/{env_id}.gif", caption=env_id)
     doc @ """
