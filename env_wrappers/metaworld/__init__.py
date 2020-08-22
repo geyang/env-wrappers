@@ -1,5 +1,4 @@
 from gym.envs import register
-from gym.error import Error
 from metaworld.envs.mujoco.env_dict import ALL_V1_ENVIRONMENTS
 
 ALL_ENVS = []
@@ -39,18 +38,17 @@ else:
     .make` to create the environments without have to import
     `metaworld` manually.
     """
-    with doc:
+    with doc, doc.row() as row:
         import gym
         from env_wrappers.metaworld import ALL_ENVS
 
-        for env_id in ALL_ENVS:
+        for env_id in ALL_ENVS[:]:
             env = gym.make(f'env_wrappers.metaworld:{env_id}')
             frames = []
             for i in range(10):
                 env.reset()
                 frames.append(env.render("rgb", width=240, height=240))
-            doc.video(frames, f"videos/{env_id}.gif")
-            break
+            row.video(frames, f"videos/{env_id}.gif", caption=env_id)
     doc @ """
     The full list of environments are
     """
