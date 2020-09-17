@@ -34,6 +34,9 @@ publish: convert-rst
 	make test
 	make wheel
 	twine upload dist/*
+publish-no-test:
+	make wheel
+	twine upload dist/*
 test:
 	pwd && \
 	python -m pytest tests --capture=no
