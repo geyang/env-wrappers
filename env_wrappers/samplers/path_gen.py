@@ -5,13 +5,11 @@ from collections import defaultdict
 from typing import Sequence
 
 
-def path_gen(env_id, seed: int, *wrappers, policy=None, obs_keys=tuple(),
-             collect=None, limit=None, **env_kwargs):
+def path_gen(env_id, seed: int, *wrappers, policy=None, collect=None, limit=None, **env_kwargs):
     """
     :env_id: str the gym environment id
     :*wrappers: positional arguments for the wrapper
     :policy: a policy function that takes in policy(*obs[k] for k in obs_keys)
-    :obs_keys: a tuple or None. When None, the obs is passed in directly
     :collect: a tuple or None. When None, defaults back to obs_keys
     :limit: the step limit, if the env does not finish before this, there is no traj['done']
     :**env_kwargs: keyvalue arguments for the environment constructor.
@@ -23,26 +21,29 @@ def path_gen(env_id, seed: int, *wrappers, policy=None, obs_keys=tuple(),
     """
 
     # todo: add whildcard `*` for obs_keys
-    env = gym.make(env_id, **env_kwargs)
+    env = gym.make(env_id, **(env_kwargs or {}))
     for w in wrappers:
         env = w(env)
     env.seed(seed)
 
-    collect = collect or obs_keys
     try:
         while True:
             obs, done = env.reset(), False
-            d = {k: [obs[k]] for k in collect if k in obs} if collect else {"x": [obs]}
+            if isinstance(obs, dict):
+                d = {k: [obs[k]] for k in collect or obs.keys() if k in obs}
+            else:
+                d = {"obs": [obs]}
             path = defaultdict(list, d)
             for step in range(limit or 10):
                 if policy is None:
                     action = env.action_space.sample()
                 else:
-                    action = policy(*[obs[k] for k in obs_keys])
+                    action = policy(*[obs[k] for k in collect])
                 obs, reward, done, info = env.step(action)
-                if obs_keys:
-                    for k in collect or []:
-                        path[k].append(obs.get(k, None))
+                if isinstance(obs, dict):
+                    for k in collect or obs.keys():
+                        if k in obs:
+                            path[k].append(obs[k])
                 else:
                     path['obs'].append(obs)
                 path['r'].append(reward)

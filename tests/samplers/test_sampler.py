@@ -39,7 +39,7 @@ def eval_sampler(runner_class, n_envs=5, ):
     from ml_logger import logger
 
     runner = runner_class([partial(rand_traj_gen, env_id="Reacher-v2", seed=i * 100) for i in range(n_envs)])
-    with logger.time(f"Warmup: {n_envs} env"):
+    with logger.time(f"Warm-up: {n_envs} env"):
         for traj in tqdm(islice(runner.trajs(), 20)):
             assert traj['img'].shape == (50, 84, 84, 3)
 
@@ -47,7 +47,7 @@ def eval_sampler(runner_class, n_envs=5, ):
     sleep(1.0)
 
     with logger.time(f"{n_envs} env"):
-        for traj in tqdm(islice(runner.trajs(), 200)):
+        for traj in tqdm(islice(runner.trajs(), 100)):
             assert traj['img'].shape == (50, 84, 84, 3)
     # testing the termination is important for making sure that we clean up
     del runner

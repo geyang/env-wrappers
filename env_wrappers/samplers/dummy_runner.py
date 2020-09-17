@@ -7,6 +7,7 @@ USE_TORCH_MP = True
 
 class DummyRunner:
     _msg = None
+    gen_fns = []
 
     def msg(self, msg):
         self._msg = msg

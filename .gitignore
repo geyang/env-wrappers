@@ -9,13 +9,13 @@
 dist
 build
 
-
 # Python egg metadata, regenerated from source files by setuptools.
 .ipynb_checkpoints
 .cache
 *.egg-info
 MUJOCO_LOG.txt
 
+*.log
 *out
 *.npy
 *.csv
