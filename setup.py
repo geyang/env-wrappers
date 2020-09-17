@@ -8,7 +8,7 @@ with open("VERSION") as f:
 
 setup(
     name="env-wrappers",
-    packages=[p for p in find_packages() if p != "tests"],
+    packages=[p for p in find_packages() if not p.startswith("tests")],
     version=version,
     install_requires=["ml-logger"],
     description="A clean collection of gym environment wrappers",
