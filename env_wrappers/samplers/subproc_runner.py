@@ -26,19 +26,14 @@ def generator_worker(remote, parent_remote, wrapped: CloudpickleWrapper, *args, 
     parent_remote.close()
     traj_gen = wrapped.payload
     gen = traj_gen(*args, **kwargs)
-    traj = next(gen)
+    assert next(gen) == "ready", "generator need to first yield a 'ready' string."
     while True:
-        remote.send(traj)
         msg = remote.recv()
-        traj = gen.send(msg)
+        traj = gen.send(msg) if msg else next(gen)
+        remote.send(traj)
 
 
 class SubprocRunner:
-    _msg = None
-
-    def msg(self, msg):
-        self._msg = msg
-
     def __init__(self, gen_fns, *args, context="spawn", context_fn=None, use_torch_mp=None, **kwargs):
         """
         :param worker:
@@ -56,7 +51,7 @@ class SubprocRunner:
         kw = context_fn(manager) if callable(context_fn) else {}
         kw.update(kwargs)
 
-        self.remotes, work_remotes = zip(*[ctx.Pipe() for _ in range(len(gen_fns))])
+        self.remotes, work_remotes = zip(*[ctx.Pipe(duplex=True) for _ in range(len(gen_fns))])
         self.pool = [ctx.Process(target=generator_worker, args=(work_remote, remote, CloudpickleWrapper(gen), *args),
                                  kwargs=kw)
                      for work_remote, remote, gen in zip(work_remotes, self.remotes, gen_fns)]
@@ -70,12 +65,19 @@ class SubprocRunner:
     def __repr__(self):
         return f"<{self.manager} SubprocRunner>"
 
-    def trajs(self, msg=None):
+    def trajs(self, *msgs, limit=None, **data):
         """ yields full trajectories"""
+        if limit:
+            data["limit"] = limit
+        if data:
+            msgs = [*msgs, data] if msgs else data
+        for r in self.remotes:
+            r.send(msgs)
         for r in cycle(self.remotes):
-            traj = r.recv()
-            r.send(msg or self._msg)
-            yield traj
+            if r.poll():
+                traj = r.recv()
+                r.send(msgs)
+                yield traj
 
     def close(self):
         for p in self.pool:

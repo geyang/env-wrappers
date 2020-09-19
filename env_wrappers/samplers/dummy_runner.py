@@ -6,11 +6,7 @@ USE_TORCH_MP = True
 
 
 class DummyRunner:
-    _msg = None
     gen_fns = []
-
-    def msg(self, msg):
-        self._msg = msg
 
     def __init__(self, gen_fns, *args, context_fn=None, **kwargs):
         """
@@ -20,16 +16,21 @@ class DummyRunner:
         kw = context_fn(None) if callable(context_fn) else {}
         kw.update(kwargs)
         self.gen_fns = [f(*args, **kw) for f in gen_fns]
+        self.new_gens = [*self.gen_fns]
+        for gen in self.new_gens:
+            assert next(gen) == "ready"
 
     def __repr__(self):
         return f"<DummyRunner>"
 
-    def trajs(self, msg=None):
+    def trajs(self, *msgs, limit=None, **data):
         """ yields full trajectories"""
-        # if limit is not None:
-        #     self._msg = limit
+        if limit:
+            data["limit"] = limit
+        if data:
+            msgs = [*msgs, data] if msgs else data
         for gen in cycle(self.gen_fns):
-            yield next(gen) if msg is None else gen.send(msg)
+            yield next(gen) if not msgs else gen.send(msgs)
 
     def close(self):
         for gen in self.gen_fns:
@@ -37,5 +38,3 @@ class DummyRunner:
 
     def __del__(self):
         self.close()
-
-

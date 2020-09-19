@@ -13,6 +13,8 @@ def rand_traj_gen(env_id, seed, limit=None, **context_args):
     env = gym.make(env_id)
     env.seed(seed)
 
+    yield "ready"
+
     while True:
         obs = env.reset()
         traj = defaultdict(list, obs=[obs])
@@ -37,17 +39,21 @@ def rand_traj_gen(env_id, seed, limit=None, **context_args):
 
 def eval_sampler(runner_class, n_envs=5, ):
     from ml_logger import logger
+    from time import sleep
 
     runner = runner_class([partial(rand_traj_gen, env_id="Reacher-v2", seed=i * 100) for i in range(n_envs)])
+
+    iter = runner.trajs()
+    sleep(15)
     with logger.time(f"Warm-up: {n_envs} env"):
-        for traj in tqdm(islice(runner.trajs(), 20)):
+        for traj in tqdm(islice(iter, 20)):
             assert traj['img'].shape == (50, 84, 84, 3)
 
-    from time import sleep
     sleep(1.0)
 
+    iter = runner.trajs()
     with logger.time(f"{n_envs} env"):
-        for traj in tqdm(islice(runner.trajs(), 100)):
+        for traj in tqdm(islice(iter, 200)):
             assert traj['img'].shape == (50, 84, 84, 3)
     # testing the termination is important for making sure that we clean up
     del runner
