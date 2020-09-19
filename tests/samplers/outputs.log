@@ -166,3 +166,7 @@ timing <Warm-up: 10 env>: 2.556E+00s
 timing <10 env>: 1.383E+01s
 timing <Warm-up: 10 env>: 3.326E+00s
 timing <10 env>: 2.038E+01s
+timing <Warm-up: 10 env>: 5.651E+00s
+timing <10 env>: 1.317E+01s
+timing <Warm-up: 10 env>: 4.684E+00s
+timing <10 env>: 1.964E+01s

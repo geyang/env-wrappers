@@ -52,7 +52,7 @@ class SubprocRunner:
 
         args = [CloudpickleWrapper(a) for a in args]
         kw = context_fn(manager) if callable(context_fn) else {}
-        kw.update(kwargs)
+        kw.update({k: CloudpickleWrapper(v) for k, v in kwargs.items()})
 
         self.remotes, work_remotes = zip(*[ctx.Pipe(duplex=True) for _ in range(len(gen_fns))])
         self.pool = [ctx.Process(target=generator_worker,
