@@ -22,9 +22,11 @@ class CloudpickleWrapper(object):
         self.payload = pickle.loads(ob)
 
 
-def generator_worker(remote, parent_remote, wrapped: CloudpickleWrapper, *args, **kwargs):
+def generator_worker(remote, parent_remote, traj_gen: CloudpickleWrapper, *args, **kwargs):
     parent_remote.close()
-    traj_gen = wrapped.payload
+    traj_gen = traj_gen.payload
+    args = [a.payload if isinstance(a, CloudpickleWrapper) else a for a in args]
+    kwargs = {k: v.payload if isinstance(v, CloudpickleWrapper) else v for k, v in kwargs.items()}
     gen = traj_gen(*args, **kwargs)
     assert next(gen) == "ready", "generator need to first yield a 'ready' string."
     while True:
@@ -48,12 +50,13 @@ class SubprocRunner:
         m = ctx.Manager()
         self.manager = manager = m.__enter__()
 
+        args = [CloudpickleWrapper(a) for a in args]
         kw = context_fn(manager) if callable(context_fn) else {}
         kw.update(kwargs)
 
         self.remotes, work_remotes = zip(*[ctx.Pipe(duplex=True) for _ in range(len(gen_fns))])
-        self.pool = [ctx.Process(target=generator_worker, args=(work_remote, remote, CloudpickleWrapper(gen), *args),
-                                 kwargs=kw)
+        self.pool = [ctx.Process(target=generator_worker,
+                                 args=(work_remote, remote, CloudpickleWrapper(gen), *args), kwargs=kw)
                      for work_remote, remote, gen in zip(work_remotes, self.remotes, gen_fns)]
 
         for p in self.pool:
