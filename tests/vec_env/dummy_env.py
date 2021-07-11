@@ -27,7 +27,7 @@ the spawning needs to happen after `__main__` according to this
 
 if __name__ == '__main__':
     with doc:
-        vecenv = SubprocVecEnv([make_env(rank) for rank in range(3)])
+        vecenv = DummyVecEnv([make_env(rank) for rank in range(3)])
 
 doc @ """
 We provide a convenient factory function in this distribution of vector 
@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
         dummy_wrappers = [lambda env: env] * 100
 
-        env = SubprocVecEnv([make_env("Reacher-v2", 100 * rank, *dummy_wrappers, ) for rank in range(3)])
+        env = DummyVecEnv([make_env("Reacher-v2", 100 * rank, *dummy_wrappers, ) for rank in range(3)])
         img = env.render('rgb_array', width=10, height=10)
         doc.print(f"env.num_envs = {env.num_envs}")
         doc.print(f"image is {type(img)} len:{img.__len__()} of shape: {img[0].shape}")
