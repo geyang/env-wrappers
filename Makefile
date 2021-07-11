@@ -30,12 +30,9 @@ update-doc: convert-rst
 release:
 	git tag v$(VERSION) -m '$(msg)'
 	git push origin --tags
-publish: convert-rst
-	make test
-	make wheel
+publish: convert-rst test wheel
 	twine upload dist/*
-publish-no-test:
-	make wheel
+publish-no-test: wheel
 	twine upload dist/*
 test:
 	pwd && \
