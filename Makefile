@@ -12,9 +12,8 @@ default:
 wheel:
 	rm -rf dist
 	python setup.py bdist_wheel
-dev:
-	make wheel
-	pip install --ignore-installed dist/env-wrappers*.whl
+dev: wheel
+	pip install  dist/env_wrappers*.whl
 convert-rst:
 	pandoc -s README.md -o README --to=rst
 	sed -i '' 's/code/code-block/g' README
