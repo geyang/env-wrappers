@@ -32,7 +32,7 @@ else:
     > by [[cmx]](./__init__.py)
     
     This module includes wrappers that are required to work 
-    with `metaworld` [link](https://github.com/rlworkgroup/metaworld).
+    with `Meta-World` [link](https://github.com/rlworkgroup/metaworld).
     In particular, we implemented a camera wrapper that directly
     taps into the underlying `env.sim.render` function as opposed
     to the gym environment `env.render` which is not implemented
@@ -42,16 +42,18 @@ else:
     
     # Usage Example
     
-    We register single task metaworld environments under the 
+    We register single task Meta-World environments under the 
     `env_wrappers.metaworld` module, so that you can use `gym
     .make` to create the environments without have to import
     `metaworld` manually.
     """
-    with doc, doc.row() as row:
+    with doc, doc.table() as t:
         import gym
         from env_wrappers.metaworld import ALL_ENVS
 
-        for env_id in ALL_ENVS[:]:
+        for i, env_id in enumerate(ALL_ENVS[:]):
+            if i % 5 == 0:
+                row = t.figure_row()
             env = gym.make(f'env_wrappers.metaworld:{env_id}')
             frames = []
             for i in range(10):
