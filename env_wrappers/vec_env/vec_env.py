@@ -112,18 +112,17 @@ class VecEnv(ABC):
         self.step_async(actions)
         return self.step_wait()
 
-    def render(self, mode='human'):
-        imgs = self.get_images()
-        bigimg = tile_images(imgs)
+    def render(self, mode='human', **kwargs):
+        imgs = self.get_images(**kwargs)
         if mode == 'human':
-            self.get_viewer().imshow(bigimg)
+            self.get_viewer().imshow(tile_images(imgs))
             return self.get_viewer().isopen
         elif mode == 'rgb_array':
-            return bigimg
+            return imgs
         else:
             raise NotImplementedError
 
-    def get_images(self):
+    def get_images(self, **kwargs):
         """
         Return RGB images from each environment
         """
@@ -169,15 +168,15 @@ class VecEnvWrapper(VecEnv):
     def close(self):
         return self.venv.close()
 
-    def render(self, mode='human'):
-        return self.venv.render(mode=mode)
+    def render(self, mode='human', **kwargs):
+        return self.venv.render(mode=mode, **kwargs)
 
-    def get_images(self):
-        return self.venv.get_images()
+    def get_images(self, **kwargs):
+        return self.venv.get_images(**kwargs)
 
     def __getattr__(self, name):
         if name.startswith('_'):
-            raise AttributeError("attempted to get missing private attribute '{}'".format(name))
+            raise AttributeError(f"attempted to get missing private attribute '{name}'")
         return getattr(self.venv, name)
 
 

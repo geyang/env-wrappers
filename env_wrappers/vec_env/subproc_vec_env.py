@@ -20,7 +20,7 @@ def worker(remote, parent_remote, env_fn_wrappers):
             elif cmd == 'reset':
                 remote.send([env.reset() for env in envs])
             elif cmd == 'render':
-                remote.send([env.render(mode='rgb_array') for env in envs])
+                remote.send([env.render(mode='rgb_array', **data) for env in envs])
             elif cmd == 'close':
                 remote.close()
                 break
@@ -81,8 +81,7 @@ class SubprocVecEnv(VecEnv):
 
     def step_wait(self):
         self._assert_not_closed()
-        results = [remote.recv() for remote in self.remotes]
-        results = _flatten_list(results)
+        results = sum([remote.recv() for remote in self.remotes], [])
         self.waiting = False
         obs, rews, dones, infos = zip(*results)
         return _flatten_obs(obs), np.stack(rews), np.stack(dones), infos
@@ -91,8 +90,7 @@ class SubprocVecEnv(VecEnv):
         self._assert_not_closed()
         for remote in self.remotes:
             remote.send(('reset', None))
-        obs = [remote.recv() for remote in self.remotes]
-        obs = _flatten_list(obs)
+        obs = sum([remote.recv() for remote in self.remotes], [])
         return _flatten_obs(obs)
 
     def close_extras(self):
@@ -104,17 +102,17 @@ class SubprocVecEnv(VecEnv):
             try:
                 remote.send(('close', None))
             except BrokenPipeError:
+                pass
+            except AttributeError:
                 pass  # avoid error at the after exit().
         for p in self.ps:
             p.join()
 
-    def get_images(self):
+    def get_images(self, **kwargs):
         self._assert_not_closed()
         for pipe in self.remotes:
-            pipe.send(('render', None))
-        imgs = [pipe.recv() for pipe in self.remotes]
-        imgs = _flatten_list(imgs)
-        return imgs
+            pipe.send(('render', kwargs))
+        return sum([pipe.recv() for pipe in self.remotes], [])
 
     def _assert_not_closed(self):
         assert not self.closed, "Trying to operate on a SubprocVecEnv after calling close()"
@@ -133,10 +131,3 @@ def _flatten_obs(obs):
     else:
         return np.stack(obs)
 
-
-def _flatten_list(l):
-    assert isinstance(l, (list, tuple))
-    assert len(l) > 0
-    assert all([len(l_) > 0 for l_ in l])
-
-    return [l__ for l_ in l for l__ in l_]
